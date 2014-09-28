@@ -6,6 +6,7 @@
 #include "events/system/MouseButtonPressed.h"
 #include "events/system/MouseButtonReleased.h"
 #include "events/system/MouseMoved.h"
+#include "events/system/MouseWheelMoved.h"
 #include "events/system/TextEntered.h"
 #include "events/system/UnknownSFMLEvent.h"
 
@@ -21,6 +22,7 @@ InputEcho::InputEcho(Engine& engine) :
 	engine.events.connect<MouseButtonPressed>(*this);
 	engine.events.connect<MouseButtonReleased>(*this);
 	engine.events.connect<MouseMoved>(*this);
+	engine.events.connect<MouseWheelMoved>(*this);
 
 	if(engine.config.get("tasks.debugTask.log") == "true") {
 		std::shared_ptr<ConsoleOutput> cOut = std::make_shared<ConsoleOutput>();
@@ -67,6 +69,12 @@ void InputEcho::receive(MouseButtonReleased& mouseButtonReleased) {
 }
 
 void InputEcho::receive(MouseMoved& mouseMoved) {
-	debugLogger.info("Mouse location{", mouseMoved.where.x, ", ", mouseMoved.where.y, "}");
+	debugLogger.info("Mouse location{", mouseMoved.where.x, ", ", mouseMoved.where.y, "}"
+	                 "\nMouse delta{", mouseMoved.delta.x, ", ", mouseMoved.delta.y, "}",
+	                 "\nWorld delta{", mouseMoved.worldDelta.x, ", ", mouseMoved.worldDelta.y, "}");
 }
 
+void InputEcho::receive(MouseWheelMoved& mouseWheelMoved) {
+	debugLogger.info("Mouse Wheel Moved{ticks: ", mouseWheelMoved.ticks,
+	                 ", mousePos{", mouseWheelMoved.x, ", ", mouseWheelMoved.y, "}}");
+}

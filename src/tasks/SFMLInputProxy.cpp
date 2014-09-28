@@ -5,12 +5,14 @@
 #include "events/system/MouseButtonPressed.h"
 #include "events/system/MouseButtonReleased.h"
 #include "events/system/MouseMoved.h"
+#include "events/system/MouseWheelMoved.h"
 #include "events/system/TextEntered.h"
 #include "events/system/UnknownSFMLEvent.h"
 
 SFMLInputProxy::SFMLInputProxy(Engine& engine, sf::RenderWindow& window) :
 		Task(engine),
-		window(window) {
+		window(window),
+		lastMousePosition(sf::Mouse::getPosition()) {
 	window.setKeyRepeatEnabled(false);
 }
 
@@ -36,8 +38,20 @@ void SFMLInputProxy::update() {
 			case sf::Event::MouseButtonReleased:
 				engine.events.emplace<MouseButtonReleased>(currentEvent.mouseButton);
 		        break;
-			case sf::Event::MouseMoved:
-				engine.events.emplace<MouseMoved>(currentEvent.mouseMove);
+			case sf::Event::MouseMoved: {
+				sf::Vector2i currentPosition = sf::Vector2i{currentEvent.mouseMove.x, currentEvent.mouseMove.y};
+				sf::Vector2i delta = currentPosition - lastMousePosition;
+
+				sf::Vector2f currentWorldPos = window.mapPixelToCoords(currentPosition);
+				sf::Vector2f lastWorldPos = window.mapPixelToCoords(lastMousePosition);
+				sf::Vector2f worldDelta = currentWorldPos - lastWorldPos;
+
+				engine.events.emplace<MouseMoved>(currentEvent.mouseMove, delta, worldDelta);
+				lastMousePosition = currentPosition;
+				break;
+			}
+			case sf::Event::MouseWheelMoved:
+				engine.events.emplace<MouseWheelMoved>(currentEvent.mouseWheel);
 		        break;
 			default:
 				engine.events.emplace<UnknownSFMLEvent>(currentEvent);

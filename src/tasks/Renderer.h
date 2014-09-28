@@ -9,4 +9,5 @@ public:
 
 private:
 	sf::RenderWindow& window;
+	sf::Color fillColor;
 };

@@ -9,7 +9,7 @@ struct TextEntered;
 struct MouseButtonPressed;
 struct MouseButtonReleased;
 struct MouseMoved;
-
+struct MouseWheelMoved;
 class InputEcho : public Task {
 public:
 	InputEcho(Engine& engine);
@@ -24,6 +24,7 @@ public:
 	void receive(MouseButtonPressed& mouseButtonPressed);
 	void receive(MouseButtonReleased& mouseButtonReleased);
 	void receive(MouseMoved& mouseMoved);
+	void receive(MouseWheelMoved& mouseWheelMoved);
 
 private:
 	Logger debugLogger;

@@ -3,7 +3,7 @@
 #include "components/RenderingComponent.h"
 
 void Renderer::update() {
-	window.clear();
+	window.clear(fillColor);
 
 	std::vector<PositionComponent*> positions;
 	std::vector<RenderingComponent*> graphics;
@@ -38,14 +38,18 @@ Renderer::Renderer(Engine& engine, sf::RenderWindow& window) :
 	std::string winTitle = engine.config.get("tasks.renderer.windowTitle");
 	unsigned int resX = engine.config.get("tasks.renderer.resolution.x", 1600u);
 	unsigned int resY = engine.config.get("tasks.renderer.resolution.y", 900u);
-
+	unsigned int clearColorR = engine.config.get<unsigned int>("tasks.renderer.fillColor.red");
+	unsigned int clearColorG = engine.config.get<unsigned int>("tasks.renderer.fillColor.green");
+	unsigned int clearColorB = engine.config.get<unsigned int>("tasks.renderer.fillColor.blue");
 	bool fullscreen = engine.config.get("tasks.renderer.fullscreen", std::string("false")) == "true";
+
 	if(fullscreen) {
 		window.create(sf::VideoMode::getFullscreenModes()[0], winTitle, sf::Style::Fullscreen);
 	}
 	else {
 		window.create(sf::VideoMode(resX, resY, 32), winTitle);
 	}
+	fillColor = sf::Color(clearColorR, clearColorG, clearColorB);
 
 	float left = engine.config.get("tasks.renderer.initialView.left", 0.0f);
 	float top = engine.config.get("tasks.renderer.initialView.top", 0.0f);
