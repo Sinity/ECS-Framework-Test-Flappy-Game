@@ -12,6 +12,10 @@ void VerletIntegrator::update() {
 	engine.components.intersection(movementComponents, positionComponents);
 
 	for (unsigned int i = 0; i < movementComponents.size(); i++) {
+		for(auto persistentForce : movementComponents[i]->persistentForces) {
+			movementComponents[i]->resultantForce += persistentForce;
+		}
+
 		sf::Vector2f acceleration = movementComponents[i]->resultantForce / movementComponents[i]->mass;
 		movementComponents[i]->resultantForce = {0, 0};
 		float time = (float)frequency.count() / 1000;

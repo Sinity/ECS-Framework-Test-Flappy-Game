@@ -3,16 +3,17 @@
 #include <SFML/Graphics.hpp>
 
 struct ApplicationClosedEvent;
-struct MouseWheelMoved;
 struct MouseButtonPressed;
-struct MouseButtonReleased;
-struct MouseMoved;
 class Controller : public Task {
 public:
 	Controller(Engine& engine);
 	void update() override;
 	void receive(ApplicationClosedEvent& closeRequest);
+	void receive(MouseButtonPressed& buttonPress);
 
 private:
 	sf::RenderWindow window;
+
+	Entity flappy;
+	sf::Texture flappyTex;
 };
