@@ -15,5 +15,12 @@ private:
 	sf::RenderWindow window;
 
 	Entity flappy;
+	std::vector<Entity> pipes;
+	std::vector<Entity> holes;
+
 	sf::Texture flappyTex;
+	sf::Texture pipeTex;
+
+	void createPipeSegment(float positionX);
+	void createFlappy();
 };
