@@ -1,13 +1,16 @@
 #include "Renderer.h"
 #include "components/PositionComponent.h"
-#include "components/RenderingComponent.h"
+#include "components/SizeComponent.h"
+#include "components/OrientationComponent.h"
+#include "components/GraphicsComponent.h"
 
 void Renderer::update() {
 	window.clear(fillColor);
 
 	std::vector<PositionComponent*> positions;
-	std::vector<RenderingComponent*> graphics;
-	engine.components.intersection(graphics, positions);
+	std::vector<SizeComponent*> sizes;
+	std::vector<GraphicsComponent*> graphics;
+	engine.components.intersection(graphics, sizes, positions);
 
 	int maxPlane = std::numeric_limits<int>::min();
 	int minPlane = std::numeric_limits<int>::max();
@@ -19,12 +22,31 @@ void Renderer::update() {
 	for(int currentPlane = maxPlane; currentPlane >= minPlane; currentPlane--) {
 		for(size_t i = 0; i < graphics.size(); i++) {
 			if(graphics[i]->plane == currentPlane) {
+				//prepare transform
 				sf::Transform transform;
-				transform.translate(positions[i]->position.x, positions[i]->position.y);
-
-				for(auto drawableElement : graphics[i]->drawablesList) {
-					window.draw(*drawableElement, sf::RenderStates(transform));
+				auto* orientation = engine.components.getComponent<OrientationComponent>(graphics[i]->owner);
+				if(orientation) {
+					transform.rotate(orientation->rotation, sizes[i]->width/2, sizes[i]->height/2);
 				}
+				transform.translate(positions[i]->position);
+
+				//prepare sprite vertices
+				sf::Vertex vertices[4];
+				vertices[0].position = {0, 0};
+				vertices[1].position = {sizes[i]->width, 0};
+				vertices[2].position = {sizes[i]->width, sizes[i]->height};
+				vertices[3].position = {0, sizes[i]->height};
+
+				vertices[0].texCoords = {0, 0};
+				vertices[1].texCoords = {graphics[i]->texture->getSize().x, 0};
+				vertices[2].texCoords = {graphics[i]->texture->getSize().x, graphics[i]->texture->getSize().y};
+				vertices[3].texCoords = {0, graphics[i]->texture->getSize().y};
+
+				//draw it
+				sf::RenderStates state;
+				state.texture = graphics[i]->texture;
+				state.transform = transform;
+				window.draw(vertices, 4, sf::Quads, state);
 			}
 		}
 	}
