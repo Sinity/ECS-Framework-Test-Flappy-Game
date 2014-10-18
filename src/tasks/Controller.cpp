@@ -48,7 +48,8 @@ Controller::Controller(Engine& engine) :
 
 	//setup sample pipe segment.
 	pipeTex.loadFromFile(engine.config.get("gameplay.files.pipeTexture"));\
-	createPipeSegment(17.f);
+    for(float xx = 17.0f; xx < 1000.f; xx += 4.f)
+		createPipeSegment(xx);
 }
 void Controller::createFlappy() {
 	flappy = engine.components.createEntity();
@@ -91,7 +92,8 @@ void Controller::createPipeSegment(float positionX) {
 	float holeMinPosition = screenUpperBoundary + holeUpperMargin;
 	float holeMaxPosition = screenLowerBoundary - floorHeight - holeHeight - holeLowerMargin;
 	std::uniform_real_distribution<float> distr{holeMinPosition, holeMaxPosition};
-	std::random_device dev;
+	static std::random_device dev;
+
 	float holeYPosition = distr(dev);
 
 	Entity hole = engine.components.createEntity();
