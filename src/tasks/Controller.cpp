@@ -54,17 +54,20 @@ Controller::Controller(Engine& engine) :
 	                                               engine.config.get("camera.follow.y", 0));
 
 	//setup sample pipe segments.
-	for(float xx = 17.0f; xx < 1000.f; xx += 4.f)
-		createPipeSegment(xx);
+    auto pipeSpacing = engine.config.get("gameplay.spaceBetweenPipes", 4.f);
+    auto initEmptySpace = engine.config.get("gameplay.initialEmptySpace", 16.f);
+	for(auto pos = initEmptySpace; pos < 1000.f; pos += pipeSpacing)
+		createPipeSegment(pos);
 }
+
 void Controller::createFlappy() {
 	flappy = engine.components.createEntity();
 
-	PositionComponent* flappyPosition = engine.components.createComponent<PositionComponent>(flappy);
-	SizeComponent* flappySize = engine.components.createComponent<SizeComponent>(flappy);
-	MovementComponent* flappyMovement = engine.components.createComponent<MovementComponent>(flappy);
-	GraphicsComponent* flappyAppearance = engine.components.createComponent<GraphicsComponent>(flappy);
-	OrientationComponent* flappyOrientation = engine.components.createComponent<OrientationComponent>(flappy);
+	auto flappyPosition = engine.components.createComponent<PositionComponent>(flappy);
+	auto flappySize = engine.components.createComponent<SizeComponent>(flappy);
+	auto flappyMovement = engine.components.createComponent<MovementComponent>(flappy);
+	auto flappyAppearance = engine.components.createComponent<GraphicsComponent>(flappy);
+	engine.components.createComponent<OrientationComponent>(flappy);
 
 	flappyPosition->position.x = engine.config.get<float>("gameplay.flappy.position.x");
 	flappyPosition->position.y = engine.config.get<float>("gameplay.flappy.position.y");
@@ -76,46 +79,49 @@ void Controller::createFlappy() {
 	flappyMovement->addTemporalForce({engine.config.get<float>("gameplay.flappy.forces.forwardConst"), 0});
 
 	flappyAppearance->texture = &flappyTex;
-
-	flappyOrientation->rotation = 40.f;
 }
 
 void Controller::createPipeSegment(float positionX) {
-    float segmentWidth = engine.config.get<float>("gameplay.pipeSegmentWidth");
-    float holeHeight = engine.config.get<float>("gameplay.hole.height");
-    float holeUpperMargin = engine.config.get<float>("gameplay.hole.upperMargin");
-    float holeLowerMargin = engine.config.get<float>("gameplay.hole.lowerMargin");
-    float invisibleSkyHeight = engine.config.get<float>("gameplay.invisibleSkyHeight");
-    float floorHeight = engine.config.get<float>("gameplay.floorHeight");
+    //get parameters from configuration
+    auto segmentWidth = engine.config.get<float>("gameplay.pipeSegmentWidth");
+    auto holeHeight = engine.config.get<float>("gameplay.hole.height");
+    auto holeUpperMargin = engine.config.get<float>("gameplay.hole.upperMargin");
+    auto holeLowerMargin = engine.config.get<float>("gameplay.hole.lowerMargin");
+    auto invisibleSkyHeight = engine.config.get<float>("gameplay.invisibleSkyHeight");
+    auto floorHeight = engine.config.get<float>("gameplay.floorHeight");
 
+    //calculate screen boundaries
 	sf::View view = window.getView();
-	float screenUpperBoundary = view.getCenter().y - view.getSize().y / 2;
-	float screenLowerBoundary = view.getCenter().y + view.getSize().y / 2;
+	auto screenUpperBoundary = view.getCenter().y - view.getSize().y / 2;
+	auto screenLowerBoundary = view.getCenter().y + view.getSize().y / 2;
 
-	float holeMinPosition = screenUpperBoundary + holeUpperMargin;
-	float holeMaxPosition = screenLowerBoundary - floorHeight - holeHeight - holeLowerMargin;
-	std::uniform_real_distribution<float> distr{holeMinPosition, holeMaxPosition};
-	static std::random_device dev;
+    //roll random hole position
+	auto holeMinPosition = screenUpperBoundary + holeUpperMargin;
+	auto holeMaxPosition = screenLowerBoundary - floorHeight - holeHeight - holeLowerMargin;
+	auto holePositionsDistribution = std::uniform_real_distribution<float>{holeMinPosition, holeMaxPosition};
+	static std::random_device randomDevice;
+	auto holeYPosition = holePositionsDistribution(randomDevice);
 
-	float holeYPosition = distr(dev);
-
-	Entity hole = engine.components.createEntity();
-	Entity upperPipe = engine.components.createEntity();
-	Entity lowerPipe = engine.components.createEntity();
-	pipes.push_back(lowerPipe);
+    //create entities building pipe segment
+	auto hole = engine.components.createEntity();
+	auto upperPipe = engine.components.createEntity();
+	auto lowerPipe = engine.components.createEntity();
 	holes.push_back(hole);
 	pipes.push_back(upperPipe);
+	pipes.push_back(lowerPipe);
 
-	PositionComponent* holePosComponent = engine.components.createComponent<PositionComponent>(hole);
-	PositionComponent* upperPipePosition = engine.components.createComponent<PositionComponent>(upperPipe);
-	PositionComponent* lowerPipePosition = engine.components.createComponent<PositionComponent>(lowerPipe);
+    //setup positions of pipe segment elements
+	auto holePosComponent = engine.components.createComponent<PositionComponent>(hole);
+	auto upperPipePosition = engine.components.createComponent<PositionComponent>(upperPipe);
+	auto lowerPipePosition = engine.components.createComponent<PositionComponent>(lowerPipe);
 	upperPipePosition->position = {positionX, screenUpperBoundary - invisibleSkyHeight};
 	lowerPipePosition->position = {positionX, holeYPosition + holeHeight};
 	holePosComponent->position = {positionX, holeYPosition};
 
-	SizeComponent* holeSize = engine.components.createComponent<SizeComponent>(hole);
-	SizeComponent* upperPipeSize = engine.components.createComponent<SizeComponent>(upperPipe);
-	SizeComponent* lowerPipeSize = engine.components.createComponent<SizeComponent>(lowerPipe);
+    //calculate sizes of pipe segment elements
+	auto holeSize = engine.components.createComponent<SizeComponent>(hole);
+	auto upperPipeSize = engine.components.createComponent<SizeComponent>(upperPipe);
+	auto lowerPipeSize = engine.components.createComponent<SizeComponent>(lowerPipe);
 	upperPipeSize->width = segmentWidth;
 	lowerPipeSize->width = segmentWidth;
 	holeSize->width = segmentWidth;
@@ -123,8 +129,9 @@ void Controller::createPipeSegment(float positionX) {
 	lowerPipeSize->height = (screenLowerBoundary - floorHeight) - lowerPipePosition->position.y;
 	holeSize->height = holeHeight;
 
-	GraphicsComponent* upperPipeAppearance = engine.components.createComponent<GraphicsComponent>(upperPipe);
-	GraphicsComponent* lowerPipeAppearance = engine.components.createComponent<GraphicsComponent>(lowerPipe);
+    //bind textures to visible elements of pipe segment
+	auto upperPipeAppearance = engine.components.createComponent<GraphicsComponent>(upperPipe);
+	auto lowerPipeAppearance = engine.components.createComponent<GraphicsComponent>(lowerPipe);
 	upperPipeAppearance->texture = &pipeTex;
 	lowerPipeAppearance->texture = &pipeTex;
 }

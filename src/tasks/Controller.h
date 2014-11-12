@@ -12,7 +12,8 @@ public:
 	void receive(MouseButtonPressed& buttonPress);
 
 private:
-	sf::RenderWindow window;
+	void createFlappy();
+	void createPipeSegment(float positionX);
 
 	Entity flappy;
 	std::vector<Entity> pipes;
@@ -20,7 +21,5 @@ private:
 
 	sf::Texture flappyTex;
 	sf::Texture pipeTex;
-
-	void createPipeSegment(float positionX);
-	void createFlappy();
+	sf::RenderWindow window;
 };
