@@ -7,22 +7,24 @@ VerletIntegrator::VerletIntegrator(Engine& engine) :
 }
 
 void VerletIntegrator::update() {
-	std::vector<MovementComponent*> movementComponents;
-	std::vector<PositionComponent*> positionComponents;
-	engine.components.intersection(movementComponents, positionComponents);
+    auto elapsedTime = (float)frequency.count() / 1000;
 
-	for (unsigned int i = 0; i < movementComponents.size(); i++) {
-		for(auto persistentForce : movementComponents[i]->persistentForces) {
-			movementComponents[i]->resultantForce += persistentForce;
+	auto movementComponents = std::vector<MovementComponent*>{};
+	auto positions = std::vector<PositionComponent*>{};
+	engine.components.intersection(movementComponents, positions);
+
+	for (auto i = 0u; i < movementComponents.size(); i++) {
+		for(auto force : movementComponents[i]->persistentForces) {
+			movementComponents[i]->resultantForce += force;
 		}
 
-		sf::Vector2f acceleration = movementComponents[i]->resultantForce / movementComponents[i]->mass;
-		movementComponents[i]->resultantForce = {0, 0};
-		float time = (float)frequency.count() / 1000;
+		auto currentPosition = positions[i]->position;
+        auto velocity = currentPosition - movementComponents[i]->oldPosition;
+		auto acceleration = movementComponents[i]->resultantForce / movementComponents[i]->mass;
+		positions[i]->position = positions[i]->position + velocity + acceleration * (elapsedTime*elapsedTime);
 
-		sf::Vector2f currentPosition = positionComponents[i]->position;
-		positionComponents[i]->position += currentPosition -
-				movementComponents[i]->oldPosition + acceleration * (time * time);
 		movementComponents[i]->oldPosition = currentPosition;
+		movementComponents[i]->resultantForce = {0, 0};
 	}
 }
+

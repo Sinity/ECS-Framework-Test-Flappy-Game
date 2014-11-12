@@ -26,7 +26,9 @@ void Renderer::update() {
 				sf::Transform transform;
 				auto* orientation = engine.components.getComponent<OrientationComponent>(graphics[i]->owner);
 				if(orientation) {
-					transform.rotate(orientation->rotation, sizes[i]->width/2, sizes[i]->height/2);
+					transform.rotate(orientation->rotation,
+					                 positions[i]->position.x + sizes[i]->width/2,
+					                 positions[i]->position.y + sizes[i]->height/2);
 				}
 				transform.translate(positions[i]->position);
 
@@ -79,4 +81,3 @@ Renderer::Renderer(Engine& engine, sf::RenderWindow& window) :
 	float height = engine.config.get("tasks.renderer.initialView.height", (float)resY);
 	window.setView(sf::View({left, top, width, height}));
 }
-

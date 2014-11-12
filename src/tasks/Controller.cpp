@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include <random>
+#include <components/OrientationComponent.h>
 #include "Renderer.h"
 #include "SFMLInputProxy.h"
 #include "InputEcho.h"
@@ -63,6 +64,7 @@ void Controller::createFlappy() {
 	SizeComponent* flappySize = engine.components.createComponent<SizeComponent>(flappy);
 	MovementComponent* flappyMovement = engine.components.createComponent<MovementComponent>(flappy);
 	GraphicsComponent* flappyAppearance = engine.components.createComponent<GraphicsComponent>(flappy);
+	OrientationComponent* flappyOrientation = engine.components.createComponent<OrientationComponent>(flappy);
 
 	flappyPosition->position.x = engine.config.get<float>("gameplay.flappy.position.x");
 	flappyPosition->position.y = engine.config.get<float>("gameplay.flappy.position.y");
@@ -74,15 +76,17 @@ void Controller::createFlappy() {
 	flappyMovement->addTemporalForce({engine.config.get<float>("gameplay.flappy.forces.forwardConst"), 0});
 
 	flappyAppearance->texture = &flappyTex;
+
+	flappyOrientation->rotation = 40.f;
 }
 
 void Controller::createPipeSegment(float positionX) {
-	float segmentWidth = engine.config.get<float>("gameplay.pipeSegmentWidth");
-	float holeHeight = engine.config.get<float>("gameplay.hole.height");
-	float holeUpperMargin = engine.config.get<float>("gameplay.hole.upperMargin");
-	float holeLowerMargin = engine.config.get<float>("gameplay.hole.lowerMargin");
-	float invisibleSkyHeight = engine.config.get<float>("gameplay.invisibleSkyHeight");
-	float floorHeight = engine.config.get<float>("gameplay.floorHeight");
+    float segmentWidth = engine.config.get<float>("gameplay.pipeSegmentWidth");
+    float holeHeight = engine.config.get<float>("gameplay.hole.height");
+    float holeUpperMargin = engine.config.get<float>("gameplay.hole.upperMargin");
+    float holeLowerMargin = engine.config.get<float>("gameplay.hole.lowerMargin");
+    float invisibleSkyHeight = engine.config.get<float>("gameplay.invisibleSkyHeight");
+    float floorHeight = engine.config.get<float>("gameplay.floorHeight");
 
 	sf::View view = window.getView();
 	float screenUpperBoundary = view.getCenter().y - view.getSize().y / 2;

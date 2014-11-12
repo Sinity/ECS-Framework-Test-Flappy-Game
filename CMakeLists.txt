@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 #set(CMAKE_BUILD_TYPE "Release")
 
 #flags
-add_definitions(-std=c++11 -Wall -Wextra)
+add_definitions(-std=c++11 -Wall -Wextra -m64)
 
 #libs
 include_directories(SYSTEM D:/libs/ECS/include)
@@ -19,7 +19,7 @@ include_directories(SYSTEM D:/libs/boost)
 include_directories(src)
 
 #project files and include pathes
-file(GLOB_RECURSE SRCS src/* *.cpp)
+file(GLOB_RECURSE SRCS "src/*.cpp")
 
 #build game
 add_executable(flappy ${SRCS})
