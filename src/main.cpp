@@ -2,7 +2,7 @@
 #include "tasks/Controller.h"
 
 int main() {
-	Engine engine;
+	auto engine = Engine{};
 
 	if(!engine.init("config.cfg", "entities.cfg")) {
 		engine.logger.fatal("main: engine initialization failed. Stopping execution.");
