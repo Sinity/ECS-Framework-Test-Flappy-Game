@@ -14,10 +14,10 @@ public:
 	}
 
 	void update() override {
-		sf::View view = window.getView();
-		sf::Vector2f desiredPos = engine.components.getComponent<PositionComponent>(attachmentPoint)->position + offset;
-		sf::Vector2f finalPos = {followX ? desiredPos.x : view.getCenter().x,
-								followY ? desiredPos.y : view.getCenter().y};
+		auto view = window.getView();
+		auto desiredPos = engine.components.getComponent<PositionComponent>(attachmentPoint)->position + offset;
+		auto finalPos = sf::Vector2f{followX ? desiredPos.x : view.getCenter().x,
+                                     followY ? desiredPos.y : view.getCenter().y};
 		view.setCenter(finalPos);
 		window.setView(view);
 	}

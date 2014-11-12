@@ -9,7 +9,7 @@ void CameraMouseController::update() {
 }
 
 void CameraMouseController::receive(MouseWheelMoved& mouseWheelEvent) {
-	sf::View currentView = window.getView();
+	auto currentView = window.getView();
 	currentView.zoom(1.f + zoomFactor * mouseWheelEvent.ticks);
 	window.setView(currentView);
 }
@@ -28,7 +28,7 @@ void CameraMouseController::receive(MouseButtonReleased& mouseRelease) {
 
 void CameraMouseController::receive(MouseMoved& mouseMoved) {
 	if(mouseMode == PanView) {
-		sf::View currentView = window.getView();
+		auto currentView = window.getView();
 		currentView.move(-mouseMoved.worldDelta.x * panViewXFactor, -mouseMoved.worldDelta.y * panViewYFactor);
 		window.setView(currentView);
 	}
@@ -37,10 +37,10 @@ void CameraMouseController::receive(MouseMoved& mouseMoved) {
 CameraMouseController::CameraMouseController(Engine& engine, sf::RenderWindow& window) :
 		Task(engine),
 		window(window),
-		zoomFactor(engine.config.get<float>("gameplay.camera.zoom.factor", 0.1f)),
-		panViewXFactor(engine.config.get<float>("gameplay.camera.pan.factor.x", 1.f)),
-		panViewYFactor(engine.config.get<float>("gameplay.camera.pan.factor.y", 1.f)),
-		panViewMouseButtonCode(engine.config.get<unsigned int>("gameplay.camera.pan.mouseButtonCode", 2)) {
+		zoomFactor(engine.config.get("gameplay.camera.zoom.factor", 0.1f)),
+		panViewXFactor(engine.config.get("gameplay.camera.pan.factor.x", 1.f)),
+		panViewYFactor(engine.config.get("gameplay.camera.pan.factor.y", 1.f)),
+		panViewMouseButtonCode(engine.config.get("gameplay.camera.pan.mouseButtonCode", 2u)) {
 	engine.events.connect<MouseWheelMoved>(*this);
 	engine.events.connect<MouseButtonPressed>(*this);
 	engine.events.connect<MouseButtonReleased>(*this);
