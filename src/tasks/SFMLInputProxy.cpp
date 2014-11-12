@@ -17,7 +17,7 @@ SFMLInputProxy::SFMLInputProxy(Engine& engine, sf::RenderWindow& window) :
 }
 
 void SFMLInputProxy::update() {
-	sf::Event currentEvent;
+	auto currentEvent = sf::Event();
 	while(window.pollEvent(currentEvent)) {
 		switch(currentEvent.type) {
 			case sf::Event::Closed:
@@ -39,15 +39,11 @@ void SFMLInputProxy::update() {
 				engine.events.emplace<MouseButtonReleased>(currentEvent.mouseButton);
 		        break;
 			case sf::Event::MouseMoved: {
-				sf::Vector2i currentPosition = sf::Vector2i{currentEvent.mouseMove.x, currentEvent.mouseMove.y};
-				sf::Vector2i delta = currentPosition - lastMousePosition;
-
-				sf::Vector2f currentWorldPos = window.mapPixelToCoords(currentPosition);
-				sf::Vector2f lastWorldPos = window.mapPixelToCoords(lastMousePosition);
-				sf::Vector2f worldDelta = currentWorldPos - lastWorldPos;
-
+				auto currMousePos = sf::Vector2i{currentEvent.mouseMove.x, currentEvent.mouseMove.y};
+				auto delta = currMousePos - lastMousePosition;
+				auto worldDelta = window.mapPixelToCoords(currMousePos) - window.mapPixelToCoords(lastMousePosition);
 				engine.events.emplace<MouseMoved>(currentEvent.mouseMove, delta, worldDelta);
-				lastMousePosition = currentPosition;
+				lastMousePosition = currMousePos;
 				break;
 			}
 			case sf::Event::MouseWheelMoved:
