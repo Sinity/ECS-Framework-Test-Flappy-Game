@@ -4,6 +4,7 @@
 
 struct ApplicationClosedEvent;
 struct MouseButtonPressed;
+struct CollisionEvent;
 class Controller : public Task {
 public:
 	Controller(Engine& engine);

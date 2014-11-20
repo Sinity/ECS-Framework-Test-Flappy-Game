@@ -1,16 +1,23 @@
 #include "Controller.h"
 #include <random>
-#include <components/OrientationComponent.h>
-#include "Renderer.h"
+
+//tasks
 #include "SFMLInputProxy.h"
-#include "InputEcho.h"
-#include "VerletIntegrator.h"
+#include "Renderer.h"
 #include "AttachedCameraController.h"
+#include "VerletIntegrator.h"
+#include "CollisionDetector.h"
+
+//events
 #include "events/system/ApplicationClosed.h"
 #include "events/system/MouseButtonPressed.h"
+
+//components
 #include "components/PositionComponent.h"
 #include "components/SizeComponent.h"
+#include "components/OrientationComponent.h"
 #include "components/MovementComponent.h"
+#include "components/CollisionComponent.h"
 #include "components/GraphicsComponent.h"
 
 void Controller::update() {
@@ -40,7 +47,7 @@ Controller::Controller(Engine& engine) :
 	engine.tasks.addTask<Renderer>(window);
 	engine.tasks.addTask<SFMLInputProxy>(window);
 	engine.tasks.addTask<VerletIntegrator>();
-	engine.tasks.addTask<InputEcho>();
+    engine.tasks.addTask<CollisionDetector>(window);
 
 	//load textures
 	pipeTex.loadFromFile(engine.config.get("gameplay.files.pipeTexture"));
@@ -56,7 +63,7 @@ Controller::Controller(Engine& engine) :
 	//setup sample pipe segments.
     auto pipeSpacing = engine.config.get("gameplay.spaceBetweenPipes", 4.f);
     auto initEmptySpace = engine.config.get("gameplay.initialEmptySpace", 16.f);
-	for(auto pos = initEmptySpace; pos < 1000.f; pos += pipeSpacing)
+	for(auto pos = initEmptySpace; pos < 200.f; pos += pipeSpacing)
 		createPipeSegment(pos);
 }
 
@@ -66,6 +73,7 @@ void Controller::createFlappy() {
 	auto flappyPosition = engine.components.createComponent<PositionComponent>(flappy);
 	auto flappySize = engine.components.createComponent<SizeComponent>(flappy);
 	auto flappyMovement = engine.components.createComponent<MovementComponent>(flappy);
+    auto flappyCollision = engine.components.createComponent<CollisionComponent>(flappy);
 	auto flappyAppearance = engine.components.createComponent<GraphicsComponent>(flappy);
 	engine.components.createComponent<OrientationComponent>(flappy);
 
@@ -78,6 +86,8 @@ void Controller::createFlappy() {
 	flappyMovement->addPersistentForce({0, engine.config.get<float>("gameplay.flappy.forces.gravity")});
 	flappyMovement->addTemporalForce({engine.config.get<float>("gameplay.flappy.forces.forwardConst"), 0});
 
+    flappyCollision->emitEvent = true;
+    flappyCollision->pushFromCollision = true;
 	flappyAppearance->texture = &flappyTex;
 }
 
@@ -128,6 +138,11 @@ void Controller::createPipeSegment(float positionX) {
 	upperPipeSize->height = holeYPosition - upperPipePosition->position.y;
 	lowerPipeSize->height = (screenLowerBoundary - floorHeight) - lowerPipePosition->position.y;
 	holeSize->height = holeHeight;
+
+    //create collision components
+     /* engine.components.createComponent<CollisionComponent>(hole); */
+    engine.components.createComponent<CollisionComponent>(upperPipe);
+    engine.components.createComponent<CollisionComponent>(lowerPipe);
 
     //bind textures to visible elements of pipe segment
 	auto upperPipeAppearance = engine.components.createComponent<GraphicsComponent>(upperPipe);

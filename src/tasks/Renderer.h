@@ -8,6 +8,9 @@ public:
 	void update() override;
 
 private:
+    //mainly for rendering into it
 	sf::RenderWindow& window;
+
+    //color of background
 	sf::Color fillColor;
 };

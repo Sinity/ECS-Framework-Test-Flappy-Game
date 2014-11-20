@@ -12,6 +12,7 @@ void Renderer::update() {
 	auto positions = std::vector<PositionComponent*>{};
 	engine.components.intersection(graphics, sizes, positions);
 
+    //calculate planes range
 	auto maxPlane = std::numeric_limits<int>::min();
 	auto minPlane = std::numeric_limits<int>::max();
 	for(auto gfx : graphics) {
@@ -20,8 +21,8 @@ void Renderer::update() {
 	}
 
     //This stupid slow algorithm is only temporal, until I get some API that have z-ordering natively
-	for(int currentPlane = maxPlane; currentPlane >= minPlane; currentPlane--) {
-		for(size_t i = 0; i < graphics.size(); i++) {
+	for(auto currentPlane = maxPlane; currentPlane >= minPlane; currentPlane--) {
+		for(auto i = 0u; i < graphics.size(); i++) {
 			if(graphics[i]->plane == currentPlane) {
 				//prepare transform
 				auto transform = sf::Transform{};
@@ -35,11 +36,13 @@ void Renderer::update() {
 
 				//prepare sprite vertices
 				sf::Vertex vertices[4];
+                //positions are in local(object) coordinate space, it's translated to world space later
 				vertices[0].position = {0, 0};
 				vertices[1].position = {sizes[i]->width, 0};
 				vertices[2].position = {sizes[i]->width, sizes[i]->height};
 				vertices[3].position = {0, sizes[i]->height};
 
+                //always use whole texture. I will add support for mapping only part of it, when I will need it
 				vertices[0].texCoords = {0, 0};
 				vertices[1].texCoords = {(float)graphics[i]->texture->getSize().x, 0};
 				vertices[2].texCoords = {(float)graphics[i]->texture->getSize().x, 
@@ -61,21 +64,20 @@ void Renderer::update() {
 Renderer::Renderer(Engine& engine, sf::RenderWindow& window) :
 		Task(engine),
 		window(window) {
-	auto winTitle = engine.config.get("tasks.renderer.windowTitle");
 	auto resX = engine.config.get("tasks.renderer.resolution.x", 1600u);
 	auto resY = engine.config.get("tasks.renderer.resolution.y", 900u);
-	auto clearColorR = engine.config.get("tasks.renderer.fillColor.red", 0u);
-	auto clearColorG = engine.config.get("tasks.renderer.fillColor.green", 0u);
-	auto clearColorB = engine.config.get("tasks.renderer.fillColor.blue", 0u);
+	auto winTitle = engine.config.get("tasks.renderer.windowTitle");
 	auto fullscreen = engine.config.get("tasks.renderer.fullscreen", std::string("false")) == "true";
-
 	if(fullscreen) {
 		window.create(sf::VideoMode::getFullscreenModes()[0], winTitle, sf::Style::Fullscreen);
 	}
 	else {
 		window.create(sf::VideoMode(resX, resY, 32), winTitle);
 	}
-	fillColor = sf::Color(clearColorR, clearColorG, clearColorB);
+
+	fillColor.r = engine.config.get("tasks.renderer.fillColor.red", 0u);
+	fillColor.g = engine.config.get("tasks.renderer.fillColor.green", 0u);
+	fillColor.b = engine.config.get("tasks.renderer.fillColor.blue", 0u);
 
 	auto left = engine.config.get("tasks.renderer.initialView.left", 0.0f);
 	auto top = engine.config.get("tasks.renderer.initialView.top", 0.0f);

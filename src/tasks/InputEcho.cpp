@@ -25,7 +25,7 @@ InputEcho::InputEcho(Engine& engine) :
 	engine.events.connect<MouseWheelMoved>(*this);
 
 	if(engine.config.get("tasks.debugTask.log") == "true") {
-		std::shared_ptr<ConsoleOutput> cOut = std::make_shared<ConsoleOutput>();
+		auto cOut = std::make_shared<ConsoleOutput>();
 		cOut->setMinPriority(LogType::Information);
 		debugLogger.addOutput(std::move(cOut));
 	}

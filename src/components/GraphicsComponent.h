@@ -9,5 +9,6 @@ COMPONENT(GraphicsComponent) {
 
 	int plane = 0;  //Planes are drawn from high to low. INT_MAX is drawn first, INT_MIN last.
                     //Drawing order within a plane is undefined.
-	sf::Texture* texture;
+                    
+	sf::Texture* texture = nullptr;
 };

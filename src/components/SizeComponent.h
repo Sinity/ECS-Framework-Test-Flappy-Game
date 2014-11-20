@@ -8,6 +8,7 @@ COMPONENT(SizeComponent) {
 		height = boost::lexical_cast<float>(args["height"]);
 	}
 
+    //dimmensions of the object in world's coordinate space(the same as positions, for example)
 	float width = 0.f;
 	float height = 0.f;
 };
