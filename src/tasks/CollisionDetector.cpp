@@ -1,5 +1,6 @@
 #include "CollisionDetector.h"
 #include <algorithm>                                                                 
+#include "components/MovementComponent.h"
 #include "events/CollisionEvent.h"
 
 //class representing 2D projection of figure on axis. Invalid until contain at least one point
@@ -35,6 +36,9 @@ void CollisionDetector::update() {
 
             //check if this pair of bodies collide
             if(!(MTV.x == 0.f && MTV.y == 0.f)) {
+                auto oldFirstPosition = positions[i]->position;
+                auto oldSecondPosition = positions[j]->position;
+
                 auto firstBodyTranslation = sf::Vector2f();
                 auto secondBodyTranslation = sf::Vector2f();
                 bool translationsApplied = true;
@@ -70,6 +74,16 @@ void CollisionDetector::update() {
                         event.minimumTranslationVector = MTV;
                     }
                     engine.events.push(std::move(event));
+                }
+
+                //update movement components if they exist
+                auto firstMovementComponent = engine.components.getComponent<MovementComponent>(positions[i]->owner);
+                if(firstMovementComponent) {
+                    firstMovementComponent->oldPosition += positions[i]->position - oldFirstPosition;
+                }
+                auto secondMovementComponent = engine.components.getComponent<MovementComponent>(positions[j]->owner);
+                if(secondMovementComponent) {
+                    secondMovementComponent->oldPosition += positions[j]->position - oldSecondPosition;
                 }
             }
         }
