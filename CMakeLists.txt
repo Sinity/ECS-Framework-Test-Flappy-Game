@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 #set(CMAKE_BUILD_TYPE "Release")
 
 #flags
-add_definitions(-std=c++11 -Wall -Wextra -m64)
+add_definitions(-std=c++14 -Wall -Wextra -m64)
 
 #libs
 include_directories(SYSTEM D:/libs/ECS/include)
