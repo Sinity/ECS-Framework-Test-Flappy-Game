@@ -64,8 +64,8 @@ void CollisionDetector::update() {
 
                 if(collisionComponents[i]->emitEvent || collisionComponents[j]->emitEvent) {
                     CollisionEvent event;
-                    event.firstBody = i;
-                    event.secondBody = j;
+                    event.firstBody = collisionComponents[i]->owner;
+                    event.secondBody = collisionComponents[j]->owner;
                     event.firstBodyTranslation = firstBodyTranslation;
                     event.secondBodyTranslation = secondBodyTranslation;
                     if(translationsApplied) {
@@ -149,7 +149,7 @@ float CollisionDetector::overlap(Projection first, Projection second) {
 std::array<sf::Vector2f, 4> CollisionDetector::getVertices(const PositionComponent& position,
                                                            const SizeComponent& size) {
     auto transform = sf::Transform{};
-    auto* orientation = engine.components.getComponent<OrientationComponent>(position.owner);
+    auto orientation = engine.components.getComponent<OrientationComponent>(position.owner);
     if(orientation) {
         transform.rotate(orientation->rotation,
                          position.position.x + size.width / 2,

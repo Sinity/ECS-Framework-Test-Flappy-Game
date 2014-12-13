@@ -6,7 +6,7 @@ void PushdownAutomata::update() {
     }
 }
 
-void PushdownAutomata::push(std::unique_ptr<State>&& state) {
+void PushdownAutomata::push(std::unique_ptr<State> state) {
     if(!states.empty()) {
         states.back()->pause();
     }

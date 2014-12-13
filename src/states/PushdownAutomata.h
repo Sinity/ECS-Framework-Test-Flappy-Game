@@ -6,7 +6,7 @@
 class PushdownAutomata {
 public:
     void update();
-    void push(std::unique_ptr<State>&& state);
+    void push(std::unique_ptr<State> state);
     void pop();
        
 private:                            

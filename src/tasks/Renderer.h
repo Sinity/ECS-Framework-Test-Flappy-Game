@@ -8,6 +8,9 @@ public:
 	void update() override;
 
 private:
+    void renderSprites();
+    void renderText();
+
     //mainly for rendering into it
 	sf::RenderWindow& window;
 
