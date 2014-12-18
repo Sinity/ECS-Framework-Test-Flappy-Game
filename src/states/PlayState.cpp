@@ -46,10 +46,13 @@ PlayState::PlayState(Engine& engine) :
 	                                               engine.config.get("camera.follow.y", 0));
 
 	//setup sample pipe segments.
-    auto pipeSpacing = engine.config.get<float>("gameplay.spaceBetweenPipes");
+    pipeSpacing = engine.config.get<float>("gameplay.spaceBetweenPipes");
     auto initEmptySpace = engine.config.get<float>("gameplay.initialEmptySpace");
-	for(auto pos = initEmptySpace; pos < 200.f; pos += pipeSpacing)
+    auto screenBoundary = window.getView().getSize().x;
+	for(auto pos = initEmptySpace; pos <= initEmptySpace + screenBoundary; pos += pipeSpacing) {
 		createPipeSegment(pos);
+        lastPipePosition = pos;
+    }
     createScoreCounter();
 }
 
@@ -74,30 +77,41 @@ void PlayState::receive(CollisionEvent& collision) {
         collision.minimumTranslationVector = -collision.minimumTranslationVector;
     }
 
-     //colliding with score trigger
-     if(std::find(begin(holes), end(holes), colliding) != end(holes)) { 
-         if(currentlyCollidingHole != colliding) { 
-             currentlyCollidingHole = colliding;
-             score++; 
-             auto text = engine.components.getComponent<GUITextComponent>(scoreCounter); 
-             if(text) { 
-                 text->text.setString(std::to_string(score)); 
-             } 
-         }     
-     }
-     //colliding with obstacle
-     else { 
-         auto flappyPos = engine.components.getComponent<PositionComponent>(flappy);
-         auto flappyMovement = engine.components.getComponent<MovementComponent>(flappy);
+    //colliding with score trigger
+    if(std::find(begin(holes), end(holes), colliding) != end(holes)) { 
+        if(currentlyCollidingHole != colliding) { 
+            currentlyCollidingHole = colliding;
+            score++; 
+            auto text = engine.components.getComponent<GUITextComponent>(scoreCounter); 
+            if(text) { 
+                text->text.setString(std::to_string(score)); 
+            } 
+            //update pipes; create new and remove old(if can't be seen)
+            createPipeSegment(lastPipePosition + pipeSpacing);
+            lastPipePosition += pipeSpacing;
+            auto leftScreenBoundary = window.getView().getCenter().x - window.getView().getSize().x / 2;
+            auto oldestPipePosition = engine.components.getComponent<PositionComponent>(pipes[0])->position.x;
+            if(oldestPipePosition < leftScreenBoundary) {
+                engine.components.deleteEntity(pipes[0]);    
+                engine.components.deleteEntity(pipes[1]);    
+                pipes.erase(begin(pipes));
+                pipes.erase(begin(pipes));
+            }
+        }     
+    }
+    //colliding with obstacle
+    else { 
+        auto flappyPos = engine.components.getComponent<PositionComponent>(flappy);
+        auto flappyMovement = engine.components.getComponent<MovementComponent>(flappy);
 
-         if(flappyPos) {
-             flappyPos->position += collision.minimumTranslationVector;
-         }
-         if(flappyMovement) {
-             flappyMovement->oldPosition.y = flappyPos->position.y;
-             flappyMovement->oldPosition.x = flappyPos->position.x;
-         }
-     } 
+        if(flappyPos) {
+            flappyPos->position += collision.minimumTranslationVector;
+        }
+        if(flappyMovement) {
+            flappyMovement->oldPosition.y = flappyPos->position.y;
+            flappyMovement->oldPosition.x = flappyPos->position.x;
+        }
+    } 
 }
 
 void PlayState::createFlappy() {
@@ -149,6 +163,8 @@ void PlayState::createPipeSegment(float positionX) {
 	auto upperPipe = engine.components.createEntity();
 	auto lowerPipe = engine.components.createEntity();
 	holes.push_back(hole);
+    pipes.push_back(upperPipe);
+    pipes.push_back(lowerPipe);
 
     //setup positions of pipe segment elements
 	auto holePosComponent = engine.components.createComponent<PositionComponent>(hole);

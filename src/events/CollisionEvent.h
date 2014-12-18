@@ -17,4 +17,3 @@ struct CollisionEvent {
     //0 if bodies were translated already
 	sf::Vector2f minimumTranslationVector = {0.f, 0.f};
 };
-
