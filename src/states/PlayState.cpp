@@ -1,5 +1,9 @@
 #include "PlayState.h"
 #include <algorithm>
+#include <ctime>
+
+//tasks
+#include "tasks/AttachedCameraController.h"
 
 //events
 #include "events/system/ApplicationClosed.h"
@@ -9,65 +13,39 @@
 //components
 #include "components/PositionComponent.h"
 #include "components/SizeComponent.h"
-#include "components/OrientationComponent.h"
 #include "components/MovementComponent.h"
 #include "components/CollisionComponent.h"
 #include "components/GraphicsComponent.h"
 #include "components/GUITextComponent.h"
 
-//tasks
-#include "tasks/SFMLInputProxy.h"
-#include "tasks/Renderer.h"
-#include "tasks/AttachedCameraController.h"
-#include "tasks/VerletIntegrator.h"
-#include "tasks/CollisionDetector.h"
-
-PlayState::PlayState(Engine& engine) :
-    engine(engine) {
+PlayState::PlayState(Engine& engine, sf::RenderWindow& window) :
+        engine(engine),
+        window(window) {
 	engine.events.connect<ApplicationClosedEvent>(*this);
 	engine.events.connect<MouseButtonPressed>(*this);
     engine.events.connect<CollisionEvent>(*this);
 
-	//boot all core tasks
-	engine.tasks.addTask<Renderer>(window);
-	engine.tasks.addTask<SFMLInputProxy>(window);
-	engine.tasks.addTask<VerletIntegrator>();
-    engine.tasks.addTask<CollisionDetector>(window);
-
-	//load textures
-	pipeTex->loadFromFile(engine.config.get("gameplay.files.pipeTexture"));
-	flappyTex->loadFromFile(engine.config.get("gameplay.files.flappyTexture"));
-
+    loadResources();
 	createFlappy();
-	engine.tasks.addTask<AttachedCameraController>(window, flappy,
-	                                               sf::Vector2f{engine.config.get<float>("camera.offset.x"),
-			                                                    engine.config.get<float>("camera.offset.y")},
-	                                               engine.config.get("camera.follow.x", 1),
-	                                               engine.config.get("camera.follow.y", 0));
-
-	//setup sample pipe segments.
-    pipeSpacing = engine.config.get<float>("gameplay.spaceBetweenPipes");
-    auto initEmptySpace = engine.config.get<float>("gameplay.initialEmptySpace");
-    auto screenBoundary = window.getView().getSize().x;
-	for(auto pos = initEmptySpace; pos <= initEmptySpace + screenBoundary; pos += pipeSpacing) {
-		createPipeSegment(pos);
-        lastPipePosition = pos;
-    }
     createScoreCounter();
+    createCamera();
+    setupInitialPipes();
 }
 
-void PlayState::receive(ApplicationClosedEvent& closeRequest) {
-	(void)closeRequest;
+void PlayState::receive(ApplicationClosedEvent&) {
 	engine.logger.info("Application close request received in Controller, stopping engine...");
+
+	engine.events.disconnect<ApplicationClosedEvent>(*this);
+	engine.events.disconnect<MouseButtonPressed>(*this);
+    engine.events.disconnect<CollisionEvent>(*this);
+
 	engine.stop();
 }
 
 void PlayState::receive(MouseButtonPressed& buttonPress) {
-	if(buttonPress.button.button == 0) {
-		auto flappyMovement = engine.components.getComponent<MovementComponent>(flappy);
-		auto flappyPosition = engine.components.getComponent<PositionComponent>(flappy);
-		flappyMovement->oldPosition.y = flappyPosition->position.y; //flappy universe logic here
-		flappyMovement->addTemporalForce({0, engine.config.get<float>("gameplay.flappy.forces.lift")});
+    const auto LPM = 0;
+	if(buttonPress.button.button == LPM) {
+        flapFlappyWings();
 	}
 }
 
@@ -79,16 +57,21 @@ void PlayState::receive(CollisionEvent& collision) {
 
     //colliding with score trigger
     if(std::find(begin(holes), end(holes), colliding) != end(holes)) { 
+        //check if it isn't hole that we're already in contact still 
         if(currentlyCollidingHole != colliding) { 
             currentlyCollidingHole = colliding;
+
+            //update player score
             score++; 
-            auto text = engine.components.getComponent<GUITextComponent>(scoreCounter); 
-            if(text) { 
+            if(auto text = engine.components.getComponent<GUITextComponent>(scoreCounter)) {
                 text->text.setString(std::to_string(score)); 
-            } 
-            //update pipes; create new and remove old(if can't be seen)
+            }
+
+            //create new pipe
             createPipeSegment(lastPipePosition + pipeSpacing);
             lastPipePosition += pipeSpacing;
+
+            //remove oldest pipe, if it can't be seen now.
             auto leftScreenBoundary = window.getView().getCenter().x - window.getView().getSize().x / 2;
             auto oldestPipePosition = engine.components.getComponent<PositionComponent>(pipes[0])->position.x;
             if(oldestPipePosition < leftScreenBoundary) {
@@ -97,8 +80,8 @@ void PlayState::receive(CollisionEvent& collision) {
                 pipes.erase(begin(pipes));
                 pipes.erase(begin(pipes));
             }
-        }     
-    }
+        }
+    }     
     //colliding with obstacle
     else { 
         auto flappyPos = engine.components.getComponent<PositionComponent>(flappy);
@@ -108,8 +91,7 @@ void PlayState::receive(CollisionEvent& collision) {
             flappyPos->position += collision.minimumTranslationVector;
         }
         if(flappyMovement) {
-            flappyMovement->oldPosition.y = flappyPos->position.y;
-            flappyMovement->oldPosition.x = flappyPos->position.x;
+            flappyMovement->oldPosition.x = flappyPos->position.x; //stop forwad motion
         }
     } 
 }
@@ -117,18 +99,20 @@ void PlayState::receive(CollisionEvent& collision) {
 void PlayState::createFlappy() {
 	flappy = engine.components.createEntity();
 
+    //create components
 	auto flappyPosition = engine.components.createComponent<PositionComponent>(flappy);
 	auto flappySize = engine.components.createComponent<SizeComponent>(flappy);
 	auto flappyMovement = engine.components.createComponent<MovementComponent>(flappy);
     auto flappyCollision = engine.components.createComponent<CollisionComponent>(flappy);
 	auto flappyAppearance = engine.components.createComponent<GraphicsComponent>(flappy);
-	engine.components.createComponent<OrientationComponent>(flappy);
 
+    //setup position and size
 	flappyPosition->position.x = engine.config.get<float>("gameplay.flappy.position.x");
 	flappyPosition->position.y = engine.config.get<float>("gameplay.flappy.position.y");
 	flappySize->width = engine.config.get<float>("gameplay.flappy.size.width");
 	flappySize->height = engine.config.get<float>("gameplay.flappy.size.height");
 
+    //setup physics
 	flappyMovement->oldPosition = flappyPosition->position;
 	flappyMovement->addPersistentForce({0, engine.config.get<float>("gameplay.flappy.forces.gravity")});
 	flappyMovement->addTemporalForce({engine.config.get<float>("gameplay.flappy.forces.forwardConst"), 0});
@@ -151,50 +135,26 @@ void PlayState::createPipeSegment(float positionX) {
 	auto screenUpperBoundary = view.getCenter().y - view.getSize().y / 2;
 	auto screenLowerBoundary = view.getCenter().y + view.getSize().y / 2;
 
-    //roll random hole position
+    //calculate range of possible hole positions
 	auto holeMinPosition = screenUpperBoundary + holeUpperMargin;
 	auto holeMaxPosition = screenLowerBoundary - floorHeight - holeHeight - holeLowerMargin;
+
+    //roll random hole position
 	auto holePositionsDistribution = std::uniform_real_distribution<float>{holeMinPosition, holeMaxPosition};
-	static std::random_device randomDevice;
-	auto holeYPosition = holePositionsDistribution(randomDevice);
+    static auto dice = std::bind(holePositionsDistribution, std::default_random_engine(time(0)));
+	auto holeYPosition = dice();
 
-    //create entities building pipe segment
-	auto hole = engine.components.createEntity();
-	auto upperPipe = engine.components.createEntity();
-	auto lowerPipe = engine.components.createEntity();
-	holes.push_back(hole);
-    pipes.push_back(upperPipe);
-    pipes.push_back(lowerPipe);
+    createHole({positionX, holeYPosition}, segmentWidth, holeHeight);
 
-    //setup positions of pipe segment elements
-	auto holePosComponent = engine.components.createComponent<PositionComponent>(hole);
-	auto upperPipePosition = engine.components.createComponent<PositionComponent>(upperPipe);
-	auto lowerPipePosition = engine.components.createComponent<PositionComponent>(lowerPipe);
-	holePosComponent->position = {positionX, holeYPosition};
-	upperPipePosition->position = {positionX, screenUpperBoundary - invisibleSkyHeight};
-	lowerPipePosition->position = {positionX, holeYPosition + holeHeight};
+    //create upper pipe
+    float upperPipeTop = screenUpperBoundary - invisibleSkyHeight;
+    float upperPipeHeight = holeYPosition - (screenUpperBoundary - invisibleSkyHeight);
+    createPipe({positionX, upperPipeTop}, segmentWidth, upperPipeHeight);
 
-    //calculate sizes of pipe segment elements
-	auto holeSize = engine.components.createComponent<SizeComponent>(hole);
-	auto upperPipeSize = engine.components.createComponent<SizeComponent>(upperPipe);
-	auto lowerPipeSize = engine.components.createComponent<SizeComponent>(lowerPipe);
-	holeSize->width = segmentWidth;
-	upperPipeSize->width = segmentWidth;
-	lowerPipeSize->width = segmentWidth;
-	holeSize->height = holeHeight;
-	upperPipeSize->height = holeYPosition - upperPipePosition->position.y;
-	lowerPipeSize->height = (screenLowerBoundary - floorHeight) - lowerPipePosition->position.y;
-
-    //create collision components
-    engine.components.createComponent<CollisionComponent>(hole);
-    engine.components.createComponent<CollisionComponent>(upperPipe);
-    engine.components.createComponent<CollisionComponent>(lowerPipe);
-
-    //bind textures to visible elements of pipe segment
-	auto upperPipeAppearance = engine.components.createComponent<GraphicsComponent>(upperPipe);
-	auto lowerPipeAppearance = engine.components.createComponent<GraphicsComponent>(lowerPipe);
-	upperPipeAppearance->texture = pipeTex;
-	lowerPipeAppearance->texture = pipeTex;
+    //create lower pipe
+    float lowerPipeTop = holeYPosition + holeHeight;
+    float lowerPipeHeight = (screenLowerBoundary - floorHeight) - (holeYPosition + holeHeight);
+    createPipe({positionX, lowerPipeTop}, segmentWidth, lowerPipeHeight);
 }
 
 void PlayState::createScoreCounter() {
@@ -211,3 +171,62 @@ void PlayState::createScoreCounter() {
     counterPosition->position.x = window.getDefaultView().getCenter().x;
 }
 
+void PlayState::createCamera() {
+    auto cameraFollowXAxis = engine.config.get("camera.follow.x", true);
+    auto cameraFollowYAxis = engine.config.get("camera.follow.y", false);
+    auto cameraOffset = sf::Vector2f{engine.config.get<float>("camera.offset.x"),
+                                    engine.config.get<float>("camera.offset.y")};
+	engine.tasks.addTask<AttachedCameraController>(window, flappy, cameraOffset, cameraFollowXAxis, cameraFollowYAxis);
+}
+
+void PlayState::setupInitialPipes() {
+    pipeSpacing = engine.config.get<float>("gameplay.spaceBetweenPipes");
+    auto initEmptySpace = engine.config.get<float>("gameplay.initialEmptySpace");
+    auto screenBoundary = window.getView().getSize().x;
+	for(auto pos = initEmptySpace; pos <= initEmptySpace + screenBoundary; pos += pipeSpacing) {
+		createPipeSegment(pos);
+        lastPipePosition = pos;
+    }                                
+}
+
+void PlayState::loadResources() {
+	pipeTex->loadFromFile(engine.config.get("gameplay.files.pipeTexture"));
+	flappyTex->loadFromFile(engine.config.get("gameplay.files.flappyTexture"));
+}
+
+void PlayState::createHole(sf::Vector2f position, float width, float height) {
+	auto hole = engine.components.createEntity();
+	holes.push_back(hole);
+
+	auto holePosComponent = engine.components.createComponent<PositionComponent>(hole);
+	holePosComponent->position = {position.x, position.y};
+
+	auto holeSize = engine.components.createComponent<SizeComponent>(hole);
+	holeSize->width = width;
+	holeSize->height = height;
+
+    engine.components.createComponent<CollisionComponent>(hole);
+}
+
+void PlayState::createPipe(sf::Vector2f position, float width, float height) {
+	auto pipe = engine.components.createEntity();
+    pipes.push_back(pipe);
+
+    auto pipePosition = engine.components.createComponent<PositionComponent>(pipe);
+    pipePosition->position = position;
+
+    auto pipeSize = engine.components.createComponent<SizeComponent>(pipe);
+    pipeSize->width = width;
+    pipeSize->height = height;
+
+    engine.components.createComponent<CollisionComponent>(pipe);
+    auto pipeAppearance = engine.components.createComponent<GraphicsComponent>(pipe);
+    pipeAppearance->texture = pipeTex;
+}
+
+void PlayState::flapFlappyWings() {
+    auto flappyMovement = engine.components.getComponent<MovementComponent>(flappy);
+    auto flappyPosition = engine.components.getComponent<PositionComponent>(flappy);
+    flappyMovement->oldPosition.y = flappyPosition->position.y; //flappy universe logic here; velocity = 0
+    flappyMovement->addTemporalForce({0, engine.config.get<float>("gameplay.flappy.forces.lift")});
+}

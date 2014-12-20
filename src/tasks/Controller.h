@@ -10,4 +10,5 @@ public:
 
 private:
     PushdownAutomata states;
+    sf::RenderWindow window;
 };
