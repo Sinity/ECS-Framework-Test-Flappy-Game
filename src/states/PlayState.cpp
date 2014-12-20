@@ -219,7 +219,9 @@ void PlayState::createPipe(sf::Vector2f position, float width, float height) {
     pipeSize->width = width;
     pipeSize->height = height;
 
-    engine.components.createComponent<CollisionComponent>(pipe);
+    auto pipeCollision = engine.components.createComponent<CollisionComponent>(pipe);
+    pipeCollision->isStatic = true;
+
     auto pipeAppearance = engine.components.createComponent<GraphicsComponent>(pipe);
     pipeAppearance->texture = pipeTex;
 }

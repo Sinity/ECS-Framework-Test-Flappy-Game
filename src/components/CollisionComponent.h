@@ -11,4 +11,8 @@ COMPONENT(CollisionComponent) {
 	bool emitEvent = false;
 
     //in case both emitEvent and pushFromCollision are false, collision with this Entity is effectively disabled
+    
+    //Invariant that object will never change it's position.
+    //If both objects in collision detection are static they won't be tested
+    bool isStatic = false;
 };

@@ -24,24 +24,22 @@ void CollisionDetector::update() {
     //check each body-body pair for collision
     for(auto i = 0u; i < collisionComponents.size(); i++) {
         for(auto j = i + 1; j < collisionComponents.size(); j++) {
-            //even if collides, we don't do anything, so don't check
-            if(!collisionComponents[i]->emitEvent && !collisionComponents[j]->emitEvent &&
-               !collisionComponents[i]->pushFromCollision && !collisionComponents[j]->pushFromCollision) {
+            bool emitEvent = collisionComponents[i]->emitEvent || collisionComponents[j]->emitEvent;
+            bool pushAnything = collisionComponents[i]->pushFromCollision || collisionComponents[j]->pushFromCollision;
+            bool bothStatic = collisionComponents[i]->isStatic && collisionComponents[j]->isStatic;
+            bool checkRequired = emitEvent || pushAnything || !bothStatic;
+            if(!checkRequired) {
                 continue;
             }
 
-            auto firstVertices = getVertices(*positions[i], *sizes[i]);
-            auto secondVertices = getVertices(*positions[j], *sizes[j]);
-            auto MTV = calculateCollision(firstVertices, secondVertices);
+            auto firstBodyVertices = getVertices(*positions[i], *sizes[i]);
+            auto secondBodyVertices = getVertices(*positions[j], *sizes[j]);
+            auto MTV = calculateCollision(firstBodyVertices, secondBodyVertices);
 
-            //check if this pair of bodies collide
-            if(!(MTV.x == 0.f && MTV.y == 0.f)) {
-                auto oldFirstPosition = positions[i]->position;
-                auto oldSecondPosition = positions[j]->position;
-
-                auto firstBodyTranslation = sf::Vector2f();
-                auto secondBodyTranslation = sf::Vector2f();
-                bool translationsApplied = true;
+            auto bodiesCollide = MTV.x != 0.f || MTV.y != 0.f;
+            if(bodiesCollide) {
+                auto firstBodyTranslation = sf::Vector2f{};
+                auto secondBodyTranslation = sf::Vector2f{};
 
                 if(collisionComponents[i]->pushFromCollision) {
                     //if both are to be pushed, push each by 1/2 of MTV in opposite directions.
@@ -53,14 +51,9 @@ void CollisionDetector::update() {
                     }
                 } else if(collisionComponents[j]->pushFromCollision) {
                     secondBodyTranslation = -MTV;
-                } else {
-                    translationsApplied = false;
                 }
-
-                if(translationsApplied) {
-                    positions[i]->position += firstBodyTranslation;
-                    positions[j]->position += secondBodyTranslation;
-                }
+                positions[i]->position += firstBodyTranslation;
+                positions[j]->position += secondBodyTranslation;
 
                 if(collisionComponents[i]->emitEvent || collisionComponents[j]->emitEvent) {
                     CollisionEvent event;
@@ -68,36 +61,28 @@ void CollisionDetector::update() {
                     event.secondBody = collisionComponents[j]->owner;
                     event.firstBodyTranslation = firstBodyTranslation;
                     event.secondBodyTranslation = secondBodyTranslation;
-                    if(translationsApplied) {
-                        event.minimumTranslationVector = {0.f, 0.f};
-                    } else {
-                        event.minimumTranslationVector = MTV;
-                    }
+                    event.minimumTranslationVector = MTV;
                     engine.events.push(std::move(event));
                 }
 
-                //update movement components if they exist
-                auto firstMovementComponent = engine.components.getComponent<MovementComponent>(positions[i]->owner);
-                if(firstMovementComponent) {
-                    firstMovementComponent->oldPosition += positions[i]->position - oldFirstPosition;
+                if(auto movementComponent = engine.components.getComponent<MovementComponent>(positions[i]->owner)) {
+                    movementComponent->oldPosition += firstBodyTranslation;
                 }
-                auto secondMovementComponent = engine.components.getComponent<MovementComponent>(positions[j]->owner);
-                if(secondMovementComponent) {
-                    secondMovementComponent->oldPosition += positions[j]->position - oldSecondPosition;
+                if(auto movementComponent = engine.components.getComponent<MovementComponent>(positions[j]->owner)) {
+                    movementComponent->oldPosition += secondBodyTranslation;
                 }
             }
         }
     }
 }
 
-//returns MTV that you can apply to first. MTV == 0 if they don't collide
+//returns MTV that you can apply to first. MTV == 0.f if they don't collide
 sf::Vector2f CollisionDetector::calculateCollision(const std::array<sf::Vector2f, 4>& first,
                                                    const std::array<sf::Vector2f, 4>& second) {
     std::vector<sf::Vector2f> axes;
     appendAxes(axes, first);
     appendAxes(axes, second);
 
-    //variables necessary to calculate MTV 
     auto minOverlap = std::numeric_limits<float>::max();
     auto minOverlapAxis = axes[0];
     auto minOverlapSecondProjection = Projection{};
@@ -146,16 +131,15 @@ float CollisionDetector::overlap(Projection first, Projection second) {
     return std::max(0.f, std::min(first.max, second.max) - std::max(first.min, second.min));
 }
 
-std::array<sf::Vector2f, 4> CollisionDetector::getVertices(const PositionComponent& position,
-                                                           const SizeComponent& size) {
+std::array<sf::Vector2f, 4> CollisionDetector::getVertices(const PositionComponent& pos, const SizeComponent& size) {
     auto transform = sf::Transform{};
-    auto orientation = engine.components.getComponent<OrientationComponent>(position.owner);
+    auto orientation = engine.components.getComponent<OrientationComponent>(pos.owner);
     if(orientation) {
         transform.rotate(orientation->rotation,
-                         position.position.x + size.width / 2,
-                         position.position.y + size.height / 2);
+                         pos.position.x + size.width / 2,
+                         pos.position.y + size.height / 2);
     }
-    transform.translate(position.position);
+    transform.translate(pos.position);
 
     return {transform.transformPoint({0, 0}),
             transform.transformPoint({size.width, 0}),
@@ -163,18 +147,18 @@ std::array<sf::Vector2f, 4> CollisionDetector::getVertices(const PositionCompone
             transform.transformPoint({0, size.height})};
 }
 
-void CollisionDetector::appendAxes(std::vector<sf::Vector2f>& where,
-                                   const std::array<sf::Vector2f, 4>& sourceVertices) {
-    sf::Vector2f side1 = sourceVertices[0] - sourceVertices[1];
-    sf::Vector2f side2 = sourceVertices[0] - sourceVertices[3];
+void CollisionDetector::appendAxes(std::vector<sf::Vector2f>& where, const std::array<sf::Vector2f, 4>& srcVertices) {
+    sf::Vector2f firstSide = srcVertices[0] - srcVertices[1];
+    sf::Vector2f secondSide = srcVertices[0] - srcVertices[3];
 
     //normalize axes
-    auto length1 = (float)sqrt(side1.x*side1.x + side1.y*side1.y);
-    side1 = {side1.x / length1, side1.y / length1};
-    auto length2 = (float)sqrt(side2.x*side2.x + side2.y*side2.y);
-    side2 = {side2.x / length2, side2.y / length2};
+    auto len = (float)sqrt(firstSide.x*firstSide.x + firstSide.y*firstSide.y);
+    firstSide = {firstSide.x / len, firstSide.y / len};
 
-    where.push_back({-side1.y, side1.x});
-    where.push_back({-side2.y, side2.x});
+    len = (float)sqrt(secondSide.x*secondSide.x + secondSide.y*secondSide.y);
+    secondSide = {secondSide.x / len, secondSide.y / len};
+
+    where.push_back({-firstSide.y, firstSide.x});
+    where.push_back({-secondSide.y, secondSide.x});
 }
 
