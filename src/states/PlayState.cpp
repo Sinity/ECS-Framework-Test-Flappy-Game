@@ -9,6 +9,7 @@
 #include "events/system/ApplicationClosed.h"
 #include "events/system/MouseButtonPressed.h"
 #include "events/CollisionEvent.h"
+#include "events/system/KeyPressed.h"
 
 //components
 #include "components/PositionComponent.h"
@@ -47,6 +48,12 @@ void PlayState::receive(MouseButtonPressed& buttonPress) {
 	if(buttonPress.button.button == LPM) {
         flapFlappyWings();
 	}
+}
+
+void PlayState::receive(KeyPressed& keystroke) {
+    if(keystroke.key == sf::Keyboard::R) {
+
+    }
 }
 
 void PlayState::receive(CollisionEvent& collision) {

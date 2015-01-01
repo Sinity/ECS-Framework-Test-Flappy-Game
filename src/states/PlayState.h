@@ -6,12 +6,14 @@
 
 struct ApplicationClosedEvent;
 struct MouseButtonPressed;
+struct KeyPressed;
 struct CollisionEvent;
 class PlayState : public State {
 public:
     PlayState(Engine& engine, sf::RenderWindow& window);
 	void receive(ApplicationClosedEvent& closeRequest);
 	void receive(MouseButtonPressed& buttonPress);
+	void receive(KeyPressed& buttonPress);
     void receive(CollisionEvent& collision);
 
 private:
