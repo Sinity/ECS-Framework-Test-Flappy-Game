@@ -1,9 +1,9 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "CameraMouseController.h"
-#include "events/system/MouseWheelMoved.h"
-#include "events/system/MouseButtonPressed.h"
-#include "events/system/MouseButtonReleased.h"
-#include "events/system/MouseMoved.h"
+#include "../events/system/MouseWheelMoved.h"
+#include "../events/system/MouseButtonPressed.h"
+#include "../events/system/MouseButtonReleased.h"
+#include "../events/system/MouseMoved.h"
 
 void CameraMouseController::update() {
 }

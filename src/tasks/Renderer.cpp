@@ -1,9 +1,9 @@
 #include "Renderer.h"
-#include "components/PositionComponent.h"
-#include "components/SizeComponent.h"
-#include "components/OrientationComponent.h"
-#include "components/GraphicsComponent.h"
-#include "components/GUITextComponent.h"
+#include "../components/PositionComponent.h"
+#include "../components/SizeComponent.h"
+#include "../components/OrientationComponent.h"
+#include "../components/GraphicsComponent.h"
+#include "../components/GUITextComponent.h"
 
 void Renderer::update() {
     window.clear(fillColor);

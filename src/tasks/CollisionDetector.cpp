@@ -1,7 +1,7 @@
 #include "CollisionDetector.h"
 #include <algorithm>                                                                 
-#include "components/MovementComponent.h"
-#include "events/CollisionEvent.h"
+#include "../components/MovementComponent.h"
+#include "../events/CollisionEvent.h"
 
 //class representing 2D projection of figure on axis. Invalid until contain at least one point
 class Projection {

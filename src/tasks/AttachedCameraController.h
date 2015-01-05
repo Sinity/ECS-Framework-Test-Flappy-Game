@@ -1,7 +1,7 @@
 #pragma once
 #include <ECS/task.h>
 #include <SFML/Graphics.hpp>
-#include "components/PositionComponent.h"
+#include "../components/PositionComponent.h"
 
 class AttachedCameraController : public Task {
 public:

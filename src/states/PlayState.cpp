@@ -3,21 +3,21 @@
 #include <ctime>
 
 //tasks
-#include "tasks/AttachedCameraController.h"
+#include "../tasks/AttachedCameraController.h"
 
 //events
-#include "events/system/ApplicationClosed.h"
-#include "events/system/MouseButtonPressed.h"
-#include "events/CollisionEvent.h"
-#include "events/system/KeyPressed.h"
+#include "../events/system/ApplicationClosed.h"
+#include "../events/system/MouseButtonPressed.h"
+#include "../events/CollisionEvent.h"
+#include "../events/system/KeyPressed.h"
 
 //components
-#include "components/PositionComponent.h"
-#include "components/SizeComponent.h"
-#include "components/MovementComponent.h"
-#include "components/CollisionComponent.h"
-#include "components/GraphicsComponent.h"
-#include "components/GUITextComponent.h"
+#include "../components/PositionComponent.h"
+#include "../components/SizeComponent.h"
+#include "../components/MovementComponent.h"
+#include "../components/CollisionComponent.h"
+#include "../components/GraphicsComponent.h"
+#include "../components/GUITextComponent.h"
 
 PlayState::PlayState(Engine& engine, sf::RenderWindow& window) :
         engine(engine),
@@ -51,7 +51,7 @@ void PlayState::receive(MouseButtonPressed& buttonPress) {
 }
 
 void PlayState::receive(KeyPressed& keystroke) {
-    if(keystroke.key == sf::Keyboard::R) {
+    if(keystroke.key.code == sf::Keyboard::R) {
 
     }
 }
@@ -148,7 +148,7 @@ void PlayState::createPipeSegment(float positionX) {
 
     //roll random hole position
 	auto holePositionsDistribution = std::uniform_real_distribution<float>{holeMinPosition, holeMaxPosition};
-    static auto dice = std::bind(holePositionsDistribution, std::default_random_engine(time(0)));
+    static auto dice = std::bind(holePositionsDistribution, std::default_random_engine((unsigned int)time(0)));
 	auto holeYPosition = dice();
 
     createHole({positionX, holeYPosition}, segmentWidth, holeHeight);

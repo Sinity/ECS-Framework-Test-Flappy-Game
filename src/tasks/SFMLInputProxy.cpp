@@ -1,13 +1,13 @@
 #include "SFMLInputProxy.h"
-#include "events/system/ApplicationClosed.h"
-#include "events/system/KeyPressed.h"
-#include "events/system/KeyReleased.h"
-#include "events/system/MouseButtonPressed.h"
-#include "events/system/MouseButtonReleased.h"
-#include "events/system/MouseMoved.h"
-#include "events/system/MouseWheelMoved.h"
-#include "events/system/TextEntered.h"
-#include "events/system/UnknownSFMLEvent.h"
+#include "../events/system/ApplicationClosed.h"
+#include "../events/system/KeyPressed.h"
+#include "../events/system/KeyReleased.h"
+#include "../events/system/MouseButtonPressed.h"
+#include "../events/system/MouseButtonReleased.h"
+#include "../events/system/MouseMoved.h"
+#include "../events/system/MouseWheelMoved.h"
+#include "../events/system/TextEntered.h"
+#include "../events/system/UnknownSFMLEvent.h"
 
 SFMLInputProxy::SFMLInputProxy(Engine& engine, sf::RenderWindow& window) :
 		Task(engine),

@@ -2,11 +2,11 @@
 #include <ECS/task.h>
 #include <array>
 #include <SFML/Graphics.hpp>
-#include "components/CollisionComponent.h"
-#include "components/PositionComponent.h"
-#include "components/SizeComponent.h"
-#include "components/OrientationComponent.h"
-#include "components/MovementComponent.h"
+#include "../components/CollisionComponent.h"
+#include "../components/PositionComponent.h"
+#include "../components/SizeComponent.h"
+#include "../components/OrientationComponent.h"
+#include "../components/MovementComponent.h"
 
 class Projection;
 class CollisionDetector : public Task {

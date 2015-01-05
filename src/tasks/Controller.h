@@ -1,7 +1,7 @@
 #pragma once
 #include <ECS/task.h>
 #include <SFML/Graphics.hpp>
-#include "states/PushdownAutomata.h"
+#include "../states/PushdownAutomata.h"
 
 class Controller : public Task {
 public:

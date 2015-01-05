@@ -1,6 +1,6 @@
 #include "VerletIntegrator.h"
-#include "components/MovementComponent.h"
-#include "components/PositionComponent.h"
+#include "../components/MovementComponent.h"
+#include "../components/PositionComponent.h"
 
 VerletIntegrator::VerletIntegrator(Engine& engine) :
 		Task(engine) {

@@ -1,11 +1,11 @@
 #include "Controller.h"
-#include "states/PlayState.h"
+#include "../states/PlayState.h"
 
 //tasks
-#include "tasks/SFMLInputProxy.h"
-#include "tasks/Renderer.h"
-#include "tasks/VerletIntegrator.h"
-#include "tasks/CollisionDetector.h"
+#include "../tasks/SFMLInputProxy.h"
+#include "../tasks/Renderer.h"
+#include "../tasks/VerletIntegrator.h"
+#include "../tasks/CollisionDetector.h"
 
 
 void Controller::update() {
