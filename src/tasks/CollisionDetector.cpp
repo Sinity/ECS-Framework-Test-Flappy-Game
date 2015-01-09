@@ -1,7 +1,11 @@
 #include "CollisionDetector.h"
 #include <algorithm>                                                                 
-#include "../components/MovementComponent.h"
 #include "../events/CollisionEvent.h"
+#include "../components/OrientationComponent.h"
+#include "../components/MovementComponent.h"
+#include "../components/CollisionComponent.h"
+#include "../components/PositionComponent.h"
+#include "../components/SizeComponent.h"
 
 //class representing 2D projection of figure on axis. Invalid until contain at least one point
 class Projection {
@@ -152,10 +156,10 @@ void CollisionDetector::appendAxes(std::vector<sf::Vector2f>& where, const std::
     sf::Vector2f secondSide = srcVertices[0] - srcVertices[3];
 
     //normalize axes
-    auto len = (float)sqrt(firstSide.x*firstSide.x + firstSide.y*firstSide.y);
+	auto len = float{sqrt(firstSide.x*firstSide.x + firstSide.y*firstSide.y)};
     firstSide = {firstSide.x / len, firstSide.y / len};
 
-    len = (float)sqrt(secondSide.x*secondSide.x + secondSide.y*secondSide.y);
+	len = float{sqrt(secondSide.x*secondSide.x + secondSide.y*secondSide.y)};
     secondSide = {secondSide.x / len, secondSide.y / len};
 
     where.push_back({-firstSide.y, firstSide.x});

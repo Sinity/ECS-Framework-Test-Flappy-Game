@@ -2,13 +2,10 @@
 #include <ECS/task.h>
 #include <array>
 #include <SFML/Graphics.hpp>
-#include "../components/CollisionComponent.h"
-#include "../components/PositionComponent.h"
-#include "../components/SizeComponent.h"
-#include "../components/OrientationComponent.h"
-#include "../components/MovementComponent.h"
 
 class Projection;
+struct PositionComponent;
+struct SizeComponent;
 class CollisionDetector : public Task {
 public:
 	CollisionDetector(Engine& engine, sf::RenderWindow& window) :

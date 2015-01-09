@@ -97,7 +97,7 @@ void PlayState::receive(CollisionEvent& collision) {
         if(flappyPos) {
             flappyPos->position += collision.minimumTranslationVector;
         }
-        if(flappyMovement) {
+        if(flappyPos && flappyMovement) {
             flappyMovement->oldPosition.x = flappyPos->position.x; //stop forwad motion
         }
     } 
