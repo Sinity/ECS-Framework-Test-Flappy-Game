@@ -1,5 +1,5 @@
 #include "PlayState.h"
-#include <algorithm>
+#include <random>
 #include <ctime>
 
 //tasks
@@ -20,26 +20,27 @@
 #include "../components/GUITextComponent.h"
 
 PlayState::PlayState(Engine& engine, sf::RenderWindow& window) :
-        engine(engine),
-        window(window) {
+engine(engine),
+window(window) {
+	init();
+}
+
+void PlayState::init() {
 	engine.events.connect<ApplicationClosedEvent>(*this);
 	engine.events.connect<MouseButtonPressed>(*this);
-    engine.events.connect<CollisionEvent>(*this);
+	engine.events.connect<CollisionEvent>(*this);
+	engine.events.connect<KeyPressed>(*this);
 
-    loadResources();
+	loadResources();
 	createFlappy();
-    createScoreCounter();
-    createCamera();
-    setupInitialPipes();
+	createScoreCounter();
+	createCamera();
+	setupInitialPipes();
 }
 
 void PlayState::receive(ApplicationClosedEvent&) {
 	engine.logger.info("Application close request received in Controller, stopping engine...");
-
-	engine.events.disconnect<ApplicationClosedEvent>(*this);
-	engine.events.disconnect<MouseButtonPressed>(*this);
-    engine.events.disconnect<CollisionEvent>(*this);
-
+	cleanup();
 	engine.stop();
 }
 
@@ -52,8 +53,9 @@ void PlayState::receive(MouseButtonPressed& buttonPress) {
 
 void PlayState::receive(KeyPressed& keystroke) {
     if(keystroke.key.code == sf::Keyboard::R) {
-
-    }
+		cleanup();
+		init();
+	}
 }
 
 void PlayState::receive(CollisionEvent& collision) {
@@ -183,7 +185,7 @@ void PlayState::createCamera() {
     auto cameraFollowYAxis = engine.config.get("camera.follow.y", false);
     auto cameraOffset = sf::Vector2f{engine.config.get<float>("camera.offset.x"),
                                     engine.config.get<float>("camera.offset.y")};
-	engine.tasks.addTask<AttachedCameraController>(window, flappy, cameraOffset, cameraFollowXAxis, cameraFollowYAxis);
+	camera = engine.tasks.addTask<AttachedCameraController>(window, flappy, cameraOffset, cameraFollowXAxis, cameraFollowYAxis);
 }
 
 void PlayState::setupInitialPipes() {
@@ -238,4 +240,30 @@ void PlayState::flapFlappyWings() {
     auto flappyPosition = engine.components.getComponent<PositionComponent>(flappy);
     flappyMovement->oldPosition.y = flappyPosition->position.y; //flappy universe logic here; velocity = 0
     flappyMovement->addTemporalForce({0, engine.config.get<float>("gameplay.flappy.forces.lift")});
+}
+
+void PlayState::cleanup() {
+	engine.events.disconnect<ApplicationClosedEvent>(*this);
+	engine.events.disconnect<MouseButtonPressed>(*this);
+	engine.events.disconnect<CollisionEvent>(*this);
+	engine.events.disconnect<KeyPressed>(*this);
+
+	engine.components.deleteEntity(flappy);
+	flappy = 0;
+	engine.components.deleteEntity(scoreCounter);
+	scoreCounter = 0;
+	score = 0;
+	
+	for (auto hole : holes) {
+		engine.components.deleteEntity(hole);
+	}
+	holes.clear();
+	
+	for (auto pipe : pipes) {
+		engine.components.deleteEntity(pipe);
+	}
+	pipes.clear();
+
+	engine.tasks.deleteTask(camera);
+	camera = nullptr;
 }

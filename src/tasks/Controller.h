@@ -5,7 +5,7 @@
 
 class Controller : public Task {
 public:
-	Controller(Engine& engine);
+	explicit Controller(Engine& engine);
 	void update() override;
 
 private:
